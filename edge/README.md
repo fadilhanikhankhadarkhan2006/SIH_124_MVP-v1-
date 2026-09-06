@@ -54,7 +54,7 @@ pip install -r requirements.txt
 From the project root:
 
 ```powershell
-python main.py --source edge/assets/test_dashcam.mp4 --fps 10 --show-video --verbose
+python main.py --source edge/assets/test_dashcam.mp4 --fps 15 --show-video --verbose
 ```
 
 ### CLI Command Options
