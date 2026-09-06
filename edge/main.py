@@ -19,6 +19,8 @@ import argparse
 import time
 import math
 import csv
+import threading
+import requests
 from datetime import datetime, timezone
 import cv2
 import numpy as np
@@ -38,6 +40,52 @@ from edge.mape_k_edge import EdgeMAPELoop
 from edge.inference import EdgeMultiModelEngine
 from edge.network.mqtt_client import EdgeMQTTClient
 from edge.storage.cache import EdgeTelemetryCache
+
+
+class LatestFrameUploader:
+    """Uploads only the newest frame so network latency cannot stall inference."""
+
+    def __init__(self, url: str, bus_id: str):
+        self.url = url
+        self.bus_id = bus_id
+        self._condition = threading.Condition()
+        self._latest_frame: bytes | None = None
+        self._stopped = False
+        self._thread = threading.Thread(target=self._run, daemon=True, name="VideoUploader")
+        self._thread.start()
+
+    def submit(self, frame: bytes):
+        with self._condition:
+            self._latest_frame = frame
+            self._condition.notify()
+
+    def _run(self):
+        with requests.Session() as session:
+            while True:
+                with self._condition:
+                    while self._latest_frame is None and not self._stopped:
+                        self._condition.wait()
+                    if self._stopped and self._latest_frame is None:
+                        return
+                    frame = self._latest_frame
+                    self._latest_frame = None
+
+                try:
+                    session.post(
+                        self.url,
+                        data=frame,
+                        headers={"Content-Type": "image/jpeg", "X-Bus-Id": self.bus_id},
+                        timeout=0.15,
+                    )
+                except requests.RequestException:
+                    pass
+
+    def stop(self):
+        with self._condition:
+            self._stopped = True
+            self._latest_frame = None
+            self._condition.notify()
+        self._thread.join(timeout=1.0)
 
 
 def calculate_heading(lat1: float, lon1: float, lat2: float, lon2: float) -> str:
@@ -92,6 +140,7 @@ def run_edge_node(
     save_video: str = None,
     broker_host: str = MQTT_BROKER_HOST,
     broker_port: int = MQTT_BROKER_PORT,
+    video_server_url: str = "http://localhost:8000/api/video/frame",
     max_frames: int = None,
 ):
     # Resolve source path
@@ -127,6 +176,7 @@ def run_edge_node(
         cache=cache,
     )
     mqtt_client.start()
+    frame_uploader = LatestFrameUploader(video_server_url, bus_id)
 
     # Initialize MAPE-K & Parallel Inference Engine
     mape_loop = EdgeMAPELoop(
@@ -289,6 +339,11 @@ def run_edge_node(
                 cached_count=cached_count,
             )
 
+            # Queue the newest frame without blocking the inference loop.
+            encoded_ok, encoded = cv2.imencode(".jpg", annotated_frame, [cv2.IMWRITE_JPEG_QUALITY, 75])
+            if encoded_ok:
+                frame_uploader.submit(encoded.tobytes())
+
             if writer:
                 writer.write(annotated_frame)
 
@@ -312,6 +367,7 @@ def run_edge_node(
             writer.release()
         if show_video:
             cv2.destroyAllWindows()
+        frame_uploader.stop()
         mqtt_client.stop()
         print(f"[Notice] Edge Node [{bus_id.upper()}] stopped cleanly.")
 
@@ -371,6 +427,11 @@ def main():
         default=MQTT_BROKER_PORT,
         help="MQTT broker port",
     )
+    parser.add_argument(
+        "--video-server",
+        default="http://localhost:8000/api/video/frame",
+        help="HTTP endpoint that receives annotated JPEG frames for the dashboard",
+    )
 
     parser.add_argument(
         "--max-frames",
@@ -391,6 +452,7 @@ def main():
         save_video=args.save_video,
         broker_host=args.broker_host,
         broker_port=args.broker_port,
+        video_server_url=args.video_server,
         max_frames=args.max_frames,
     )
 

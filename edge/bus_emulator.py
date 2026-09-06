@@ -225,7 +225,7 @@ if __name__ == "__main__":
     parser.add_argument("--bus-id", default="bus_1", help="Unique identifier for this transit bus")
     parser.add_argument("--video", default="edge/assets/test_dashcam.mp4", help="Path to input dashcam video")
     parser.add_argument("--route", default="edge/gps_tracks/route_1.csv", help="Path to GPS trajectory CSV")
-    parser.add_argument("--fps", type=int, default=10, help="Target inference FPS")
+    parser.add_argument("--fps", type=int, default=15, help="Target inference FPS")
     parser.add_argument("--save-video", default=None, help="Optional output path for annotated video")
     args = parser.parse_args()
 

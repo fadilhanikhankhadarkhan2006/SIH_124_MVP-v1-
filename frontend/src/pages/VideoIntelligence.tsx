@@ -127,9 +127,26 @@ export default function VideoIntelligence({ defects, vehicles, alerts, isConnect
         </div>
       )}
 
-      {/* Live Edge Status Bar */}
-      <div className="video-main-container" style={{ marginBottom: 12 }}>
-        <div className="routesense-card" style={{ display: 'flex', gap: 20, alignItems: 'center', padding: '14px 20px', flexWrap: 'wrap' }}>
+      <div className="video-top-layout">
+        {/* Annotated MJPEG feed produced by the edge node */}
+        <div className="video-main-container">
+          <div className="video-player-frame">
+            <div className="dashcam-screen">
+              <img
+                className="dashcam-img"
+                src="/api/video/stream"
+                alt="Live annotated dashcam stream with pothole detections"
+              />
+              <div className="video-controls-overlay">
+                <Activity size={15} color="#10b981" />
+                <span className="video-time-text">LIVE EDGE FEED · ANNOTATED POTHOLES</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Live Edge Status Panel */}
+        <div className="video-side-panel routesense-card">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {isConnected ? <Wifi size={16} color="#10b981" /> : <WifiOff size={16} color="#ef4444" />}
             <span style={{ fontSize: 13, fontWeight: 600, color: isConnected ? '#10b981' : '#ef4444' }}>
@@ -145,7 +162,6 @@ export default function VideoIntelligence({ defects, vehicles, alerts, isConnect
           <div style={{ fontSize: 12, color: '#94a3b8' }}>
             Avg confidence: <strong style={{ color: '#f8fafc' }}>{avgConf > 0 ? (avgConf * 100).toFixed(1) + '%' : '—'}</strong>
           </div>
-          <div style={{ flex: 1 }} />
           <div style={{
             background: densityScore > 0 ? `${densityColor}22` : 'rgba(100,116,139,0.2)',
             border: `1px solid ${densityColor}`,
@@ -158,7 +174,8 @@ export default function VideoIntelligence({ defects, vehicles, alerts, isConnect
       </div>
 
       {/* Bottom Intelligence Grid */}
-      <div className="video-analytics-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+      <div className="video-analytics-scroll">
+        <div className="video-analytics-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
 
         {/* Card 1: Live Detection Feed */}
         <div className="routesense-card detections-table-card" style={{ gridColumn: 'span 2' }}>
@@ -334,6 +351,7 @@ export default function VideoIntelligence({ defects, vehicles, alerts, isConnect
               No vehicles detected yet...
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

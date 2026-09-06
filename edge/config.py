@@ -13,7 +13,7 @@ MQTT_QOS = 1
 # ── YOLO ──────────────────────────────────────────
 YOLO_MODEL_PATH = "yolov8n.pt"          # Downloaded automatically by ultralytics
 YOLO_CONFIDENCE_THRESHOLD = 0.50       # Minimum confidence to publish an event
-YOLO_TARGET_FPS = 10                   # Process every Nth frame to reduce CPU load
+YOLO_TARGET_FPS = 15                   # Process every Nth frame to reduce CPU load
 
 # ── Edge MAPE-K Thresholds ────────────────────────
 LUX_NIGHT_THRESHOLD = 15.0             # Below this → activate night pipeline
