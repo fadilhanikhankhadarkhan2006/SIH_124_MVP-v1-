@@ -13,16 +13,11 @@ venv/
 env/
 *.egg
 
-# YOLOv8 model weights (download separately - too large for git)
-*.pt
-*.onnx
-*.engine
+# YOLOv8 model weights (allow edge models for out-of-the-box execution)
+!edge/models/*.pt
 
-# Video files (too large for git)
-*.mp4
-*.avi
-*.mov
-*.mkv
+# Video files (allow sample dashcam videos)
+!edge/assets/*.mp4
 
 # Environment variables
 .env
