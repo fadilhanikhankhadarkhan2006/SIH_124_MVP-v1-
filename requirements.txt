@@ -23,6 +23,7 @@ ultralytics>=8.1.0
 
 # ----------------- Shared Networking & Telemetry -------------
 paho-mqtt>=1.6.1
+amqtt>=0.11.0          # Pure-Python lightweight MQTT broker (python mosquitto/broker.py)
 requests>=2.31.0
 protobuf>=4.25.0
 
